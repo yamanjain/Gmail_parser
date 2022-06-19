@@ -1,4 +1,4 @@
-#from __future__ import print_function
+# from __future__ import print_function
 
 from bs4 import BeautifulSoup
 import base64
@@ -57,16 +57,16 @@ def main():
             msg = service.users().messages().get(userId="me", id=result['id'], format="full").execute()
             payload = msg['payload']
             parts = payload.get('parts')
-            if (parts is None):
-                #Simpler method without recursion
+            if parts is None:
+                # Simpler method without recursion
                 email_body = parse_msg_body(msg)
             else:
-                #Get body using recursion
+                # Get body using recursion
                 [body_message, body_html] = processParts(parts)
-                email_bodytext = str(body_message, 'utf-8')
-                email_html = str(body_html,'utf-8')
+                email_body_text = str(body_message, 'utf-8')
+                email_html = str(body_html, 'utf-8')
                 email_html_text = clean_html(email_html)
-                email_body = email_bodytext + email_html_text
+                email_body = email_body_text + email_html_text
 
             email_headers = get_headers(msg)
             attachment_obj = parse_attachment_as_dict(service, msg, result['id'])
@@ -77,7 +77,8 @@ def main():
                 attachment_obj['Child Claim ref number'] = "NA"
 
             # Create a python data structure with all the info and convert it to json and write to a file
-            output_list.append({'bank_ref_no': bank_ref_no, 'email_headers': email_headers, 'email_body': email_body, 'attachment_obj': attachment_obj})
+            output_list.append({'bank_ref_no': bank_ref_no, 'email_headers': email_headers, 'email_body': email_body,
+                                'attachment_obj': attachment_obj})
         with open("payload.json", "w") as outfile:
             json.dump(output_list, outfile)
 
@@ -98,14 +99,14 @@ def get_headers(msg):
 
 def fetch_emails(service):
     """
-    Get all emiails based on a filter passed in args
+    Get all emails based on a filter passed in args
     """
     try:
         # Filter q string passed from caller.
         args = sys.argv[1:]
         # Call the Gmail API
-        results = service.users().messages().list(userId='me', q="Fund Transfer CMS2575678891").execute()
-        #results = service.users().messages().list(userId='me', q=args[0]).execute()
+        #results = service.users().messages().list(userId='me', q="Fund Transfer CMS2575678891").execute()
+        results = service.users().messages().list(userId='me', q=args[0]).execute()
         return results['messages'] or []
     except HttpError as error:
         print(f'An error occurred: {error}')
@@ -123,12 +124,14 @@ def parse_msg_body(msg):
         if msg.get("payload").get("body").get("data"):
             return base64.urlsafe_b64decode(msg.get("payload").get("body").get("data").encode("ASCII")).decode("utf-8")
         elif msg.get("payload").get("parts")[0].get("body").get("data"):
-            return base64.urlsafe_b64decode(msg.get("payload").get("parts")[0].get("body").get("data").encode("ASCII")).decode("utf-8")
+            return base64.urlsafe_b64decode(
+                msg.get("payload").get("parts")[0].get("body").get("data").encode("ASCII")).decode("utf-8")
         elif msg.get("payload").get("parts")[0].get("parts")[0].get("body").get("data"):
-            return base64.urlsafe_b64decode(msg.get("payload").get("parts")[0].get("parts")[0].get("body").get("data")).decode("utf-8")
+            return base64.urlsafe_b64decode(
+                msg.get("payload").get("parts")[0].get("parts")[0].get("body").get("data")).decode("utf-8")
         return msg.get("snippet")
     except Exception as e:
-        err_msg = f"Error occured while fetching email body: {e}"
+        err_msg = f"Error occurred while fetching email body: {e}"
         print(err_msg)
         return err_msg
 
@@ -137,7 +140,7 @@ def parse_attachment_as_dict(service, msg, msg_id):
     """
     Parse attachment as a dict.
     """
-    # Check all attachements and find the right one (ms excel)
+    # Check all attachments and find the right one (MS Excel)
     parts = msg.get('payload').get('parts')
     if not parts:
         return {}
@@ -149,7 +152,8 @@ def parse_attachment_as_dict(service, msg, msg_id):
         else:
             all_parts.append(p)
 
-    att_parts = [p for p in all_parts if (p['mimeType'] == 'application/vnd.ms-excel' or p['mimeType'] == 'application/octet-stream')]
+    att_parts = [p for p in all_parts if
+                 (p['mimeType'] == 'application/vnd.ms-excel' or p['mimeType'] == 'application/octet-stream')]
     # filenames = [p['filename'] for p in att_parts]
     attachment_obj = {}
 
@@ -158,7 +162,7 @@ def parse_attachment_as_dict(service, msg, msg_id):
         data = part['body'].get('data')
         attachment_id = part['body'].get('attachmentId')
         if not data:
-            # Retrieve the attachment separately since its not part of the message object
+            # Retrieve the attachment separately since it's not part of the message object
             att = service.users().messages().attachments().get(
                 userId='me', id=attachment_id, messageId=msg_id).execute()
             data = att['data']
@@ -192,9 +196,10 @@ def processParts(parts):
             [body_message, body_html] = processParts(subparts)
         elif mimeType == 'text/plain' and not isinstance(data, type(None)):
             body_message = base64.urlsafe_b64decode(data)
-        elif mimeType == 'text/html'  and not isinstance(data, type(None)):
+        elif mimeType == 'text/html' and not isinstance(data, type(None)):
             body_html = base64.urlsafe_b64decode(data)
     return [body_message, body_html]
+
 
 def clean_html(email_html):
     soup = BeautifulSoup(email_html, features="html.parser")
@@ -212,6 +217,7 @@ def clean_html(email_html):
     # drop blank lines
     text = '\n'.join(chunk for chunk in chunks if chunk)
     return text
+
 
 def build_json():
     pass
