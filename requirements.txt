@@ -1,0 +1,6 @@
+beautifulsoup4==4.11.1
+google_api_python_client==2.49.0
+google_auth_oauthlib==0.5.1
+pandas==1.4.2
+protobuf==4.21.1
+xlrd==2.0.1
