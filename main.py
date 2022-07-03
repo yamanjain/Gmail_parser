@@ -18,6 +18,7 @@ from googleapiclient.errors import HttpError
 
 # If modifying these scopes, delete the file token.json.
 from pandas import read_excel
+import fitz
 
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 
@@ -106,6 +107,7 @@ def fetch_emails(service):
         args = sys.argv[1:]
         # Call the Gmail API
         #results = service.users().messages().list(userId='me', q="Fund Transfer CMS2575678891").execute()
+        #results = service.users().messages().list(userId='me', q='"Fortnightly claim settlement data" newer_than:4d').execute()
         results = service.users().messages().list(userId='me', q=args[0]).execute()
         return results['messages'] or []
     except HttpError as error:
@@ -153,7 +155,7 @@ def parse_attachment_as_dict(service, msg, msg_id):
             all_parts.append(p)
 
     att_parts = [p for p in all_parts if
-                 (p['mimeType'] == 'application/vnd.ms-excel' or p['mimeType'] == 'application/octet-stream')]
+                 (p['mimeType'] == 'application/vnd.ms-excel' or p['mimeType'] == 'application/octet-stream' or p['mimeType']=='application/pdf')]
     # filenames = [p['filename'] for p in att_parts]
     attachment_obj = {}
 
@@ -168,16 +170,24 @@ def parse_attachment_as_dict(service, msg, msg_id):
             data = att['data']
             str_data = base64.urlsafe_b64decode(data.encode('UTF-8'))
             # Convert string data to dataframe
-            try:
-                df = read_excel(BytesIO(str_data))
+            if p['mimeType'] == 'application/pdf':
+                with fitz.open(stream=str_data, filetype="pdf") as doc:
+                    text = ""
+                    for page in doc:
+                        text += page.get_text()
                 attachment_obj = {}
-                # Create dict with key as Column name and value as the actual value
-                for col in df.columns:
-                    val = list(df[col])
-                    attachment_obj[col] = val[0]
-                break
-            except Exception as e:
-                attachment_obj['Error'] = str(e)
+                attachment_obj['pdf_text'] = text
+            else:
+                try:
+                    df = read_excel(BytesIO(str_data))
+                    attachment_obj = {}
+                    # Create dict with key as Column name and value as the actual value
+                    for col in df.columns:
+                        val = list(df[col])
+                        attachment_obj[col] = val[0]
+                    break
+                except Exception as e:
+                    attachment_obj['Error'] = str(e)
 
     return attachment_obj
 
