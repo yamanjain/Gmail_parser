@@ -1,7 +1,7 @@
 
 # GMAIL Parser to JSON
 
-Python project to get Gmail body, from, to, subject, and also parse CSV attachment to payload.json file locally.
+Python project to get Gmail body, from, to, subject, and also parse CSV/PDF attachment to payload.json file locally.
 The file credentials.json must be downloaded from https://console.cloud.google.com/apis/credentials
 
 
@@ -29,6 +29,11 @@ pip install protobuf
 pip install xlrd
 pip install BeautifulSoup
 pip install PyMuPDF
+```
+
+To compile into exe, I used pyinstaller
+```
+pyinstaller --onefile --console --name Email_Parser main.py
 ```
 
 On first run, authentication is done in a browser window to the required GMAIL account and a file token.json is created. On second run the program runs successfully to create payload.json with the email data.

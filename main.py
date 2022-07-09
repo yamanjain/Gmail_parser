@@ -110,13 +110,13 @@ def fetch_emails(service):
     Get all emails based on a filter passed in args
     """
     try:
-        # Filter q string passed from caller.
+        # Filter q sssed from caller.
         args = sys.argv[1:]
         # Call the Gmail API
         # results = service.users().messages().list(userId='me', q="from:NIAHO@newindia.co.in niaho newer_than:4d").execute()
         # results = service.users().messages().list(userId='me', q='from:support@icicilombard.com subject:fund transfer for motor claim newer_than:8d').execute()
-        results = service.users().messages().list(userId='me', q="niaho tds newer_than:15d").execute()
-        # results = service.users().messages().list(userId='me', q=args[0]).execute()
+        #results = service.users().messages().list(userId='me', q="niaho tds newer_than:15d").execute()
+        results = service.users().messages().list(userId='me', q=args[0]).execute()
         if 'messages' in results:
             return results['messages'] or []
         else:
