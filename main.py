@@ -6,6 +6,7 @@ import json
 import math
 import os.path
 import sys
+import re
 
 from io import BytesIO
 
@@ -71,11 +72,17 @@ def main():
 
             email_headers = get_headers(msg)
             attachment_obj = parse_attachment_as_dict(service, msg, result['id'])
-            bank_ref_no = 'NA'
+            bank_ref_no = ['NA']
             if 'BankRefNo' in attachment_obj:
                 bank_ref_no = attachment_obj['BankRefNo']
-            if 'Child Claim ref number' in attachment_obj and math.isnan(attachment_obj['Child Claim ref number']):
-                attachment_obj['Child Claim ref number'] = "NA"
+            # if 'Child Claim ref number' in attachment_obj and math.isnan(attachment_obj['Child Claim ref number'][0]):
+            #     attachment_obj['Child Claim ref number'][0] = "NA"
+            # change all NaN to "NA" in the attachment_obj dictionary
+            if 'Child Claim ref number' in attachment_obj:
+                stringify = json.dumps(attachment_obj)
+                regex = re.compile(r'\bnan\b', flags=re.IGNORECASE)
+                stringify = re.sub(regex, r'"NA"', stringify)
+                attachment_obj = json.loads(stringify)
 
             # Create a python data structure with all the info and convert it to json and write to a file
             output_list.append({'bank_ref_no': bank_ref_no, 'email_headers': email_headers, 'email_body': email_body,
@@ -106,10 +113,14 @@ def fetch_emails(service):
         # Filter q string passed from caller.
         args = sys.argv[1:]
         # Call the Gmail API
-        #results = service.users().messages().list(userId='me', q="Fund Transfer CMS2575678891").execute()
-        #results = service.users().messages().list(userId='me', q='"Fortnightly claim settlement data" newer_than:4d').execute()
-        results = service.users().messages().list(userId='me', q=args[0]).execute()
-        return results['messages'] or []
+        # results = service.users().messages().list(userId='me', q="from:NIAHO@newindia.co.in niaho newer_than:4d").execute()
+        # results = service.users().messages().list(userId='me', q='from:support@icicilombard.com subject:fund transfer for motor claim newer_than:8d').execute()
+        results = service.users().messages().list(userId='me', q="niaho tds newer_than:15d").execute()
+        # results = service.users().messages().list(userId='me', q=args[0]).execute()
+        if 'messages' in results:
+            return results['messages'] or []
+        else:
+            return []
     except HttpError as error:
         print(f'An error occurred: {error}')
 
@@ -155,7 +166,8 @@ def parse_attachment_as_dict(service, msg, msg_id):
             all_parts.append(p)
 
     att_parts = [p for p in all_parts if
-                 (p['mimeType'] == 'application/vnd.ms-excel' or p['mimeType'] == 'application/octet-stream' or p['mimeType']=='application/pdf')]
+                 (p['mimeType'] == 'application/vnd.ms-excel' or p['mimeType'] == 'application/octet-stream' or p[
+                     'mimeType'] == 'application/pdf')]
     # filenames = [p['filename'] for p in att_parts]
     attachment_obj = {}
 
@@ -184,7 +196,10 @@ def parse_attachment_as_dict(service, msg, msg_id):
                     # Create dict with key as Column name and value as the actual value
                     for col in df.columns:
                         val = list(df[col])
-                        attachment_obj[col] = val[0]
+                        attachment_obj[col] = val
+                    # if df.len() > 2:
+                    #     # df.groupby('BankRefNo').apply(lambda x: x.to_dict(orient='r')).to_dict()
+                    #     attachment_obj = df.todict(orient='records')
                     break
                 except Exception as e:
                     attachment_obj['Error'] = str(e)

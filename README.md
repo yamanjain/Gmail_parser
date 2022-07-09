@@ -28,6 +28,7 @@ pip install pandas
 pip install protobuf
 pip install xlrd
 pip install BeautifulSoup
+pip install PyMuPDF
 ```
 
 On first run, authentication is done in a browser window to the required GMAIL account and a file token.json is created. On second run the program runs successfully to create payload.json with the email data.
