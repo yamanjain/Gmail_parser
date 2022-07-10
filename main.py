@@ -190,7 +190,7 @@ def parse_attachment_as_dict(service, msg, msg_id):
                     for page in doc:
                         text += page.get_text()
                 attachment_obj = {}
-                attachment_obj['pdf_text'] = text
+                attachment_obj['pdf_text'] = [text]
             else:
                 try:
                     df = read_excel(BytesIO(str_data))
