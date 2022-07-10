@@ -115,7 +115,7 @@ def fetch_emails(service):
         # Call the Gmail API
         # results = service.users().messages().list(userId='me', q="from:NIAHO@newindia.co.in niaho newer_than:4d").execute()
         # results = service.users().messages().list(userId='me', q='from:support@icicilombard.com subject:fund transfer for motor claim newer_than:8d').execute()
-        #results = service.users().messages().list(userId='me', q="niaho tds newer_than:15d").execute()
+        #results = service.users().messages().list(userId='me', q="from:noreply@godigit.com subject:Claim Payment Advice newer_than:10d").execute()
         results = service.users().messages().list(userId='me', q=args[0]).execute()
         if 'messages' in results:
             return results['messages'] or []
@@ -182,7 +182,9 @@ def parse_attachment_as_dict(service, msg, msg_id):
             data = att['data']
             str_data = base64.urlsafe_b64decode(data.encode('UTF-8'))
             # Convert string data to dataframe
-            if p['mimeType'] == 'application/pdf':
+            att_fname = p['filename']
+            att_ext = os.path.splitext(att_fname)[1]
+            if att_ext == '.pdf':
                 with fitz.open(stream=str_data, filetype="pdf") as doc:
                     text = ""
                     for page in doc:
