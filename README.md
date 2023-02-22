@@ -33,7 +33,7 @@ pip install PyMuPDF
 
 To compile into exe, I used pyinstaller
 ```
-pyinstaller --onefile --console --name Email_Parser main.py
+pyinstaller --onefile --console --clean --name Email_Parser main.py
 ```
 
 On first run, authentication is done in a browser window to the required GMAIL account and a file token.json is created. On second run the program runs successfully to create payload.json with the email data.
