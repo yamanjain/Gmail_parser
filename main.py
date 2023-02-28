@@ -80,8 +80,8 @@ def main():
             # change all NaN to "NA" in the attachment_obj dictionary
             if 'Child Claim ref number' in attachment_obj:
                 stringify = json.dumps(attachment_obj)
-                regex = re.compile(r'\bnan\b', flags=re.IGNORECASE)
-                stringify = re.sub(regex, r'"NA"', stringify)
+                # regex = re.compile(r'\bnan\b', flags=re.IGNORECASE)
+                # stringify = re.sub(regex, r'"NA"', stringify)
                 attachment_obj = json.loads(stringify)
 
             # Create a python data structure with all the info and convert it to json and write to a file
@@ -116,6 +116,8 @@ def fetch_emails(service):
         # results = service.users().messages().list(userId='me', q="from:NIAHO@newindia.co.in niaho newer_than:4d").execute()
         # results = service.users().messages().list(userId='me', q='from:support@icicilombard.com subject:fund transfer for motor claim newer_than:8d').execute()
         #results = service.users().messages().list(userId='me', q="from:noreply@godigit.com subject:Claim Payment Advice newer_than:10d").execute()
+        # results = service.users().messages().list(userId='me', q="label:autoproc newer_than:23d").execute()
+
         results = service.users().messages().list(userId='me', q=args[0]).execute()
         if 'messages' in results:
             return results['messages'] or []
@@ -194,6 +196,7 @@ def parse_attachment_as_dict(service, msg, msg_id):
             else:
                 try:
                     df = read_excel(BytesIO(str_data))
+                    df=df.fillna(r"NA")
                     attachment_obj = {}
                     # Create dict with key as Column name and value as the actual value
                     for col in df.columns:
